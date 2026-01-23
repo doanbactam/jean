@@ -28,6 +28,7 @@ import {
 } from '@pierre/diffs'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
+import { getFilename } from '@/lib/path-utils'
 import { getGitDiff } from '@/services/git-status'
 import { useTheme } from '@/hooks/use-theme'
 import { usePreferences } from '@/services/preferences'
@@ -264,7 +265,7 @@ const CommentInputBar = memo(function CommentInputBar({
     <div className="flex items-center gap-2 px-3 h-10 bg-muted rounded-md border border-border">
       <MessageSquarePlus className="h-4 w-4 text-muted-foreground shrink-0" />
       <span className="text-xs text-muted-foreground shrink-0">
-        {activeFileName?.split('/').pop()}:{selectedRange.start}
+        {activeFileName ? getFilename(activeFileName) : ''}:{selectedRange.start}
         {selectedRange.end !== selectedRange.start && `-${selectedRange.end}`}
       </span>
       <input
@@ -807,8 +808,7 @@ export function GitDiffModal({
               <div>
                 {flattenedFiles.map((file, index) => {
                   const isSelected = index === selectedFileIndex
-                  const displayName =
-                    file.fileName.split('/').pop() || file.fileName
+                  const displayName = getFilename(file.fileName)
 
                   return (
                     <button

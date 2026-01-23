@@ -1,7 +1,6 @@
 //! Tauri commands for GitHub CLI management
 
 use serde::{Deserialize, Serialize};
-use std::process::Command;
 use tauri::{AppHandle, Emitter};
 
 use super::config::{ensure_gh_cli_dir, get_gh_cli_binary_path};
@@ -79,7 +78,7 @@ pub async fn check_gh_cli_installed(app: AppHandle) -> Result<GhCliStatus, Strin
     // Try to get the version by running gh --version
     // Use shell wrapper to bypass macOS security restrictions
     let shell_cmd = format!("{:?} --version", binary_path);
-    let version = match Command::new("/bin/sh").arg("-c").arg(&shell_cmd).output() {
+    let version = match crate::platform::shell_command(&shell_cmd).output() {
         Ok(output) => {
             if output.status.success() {
                 let version_str = String::from_utf8_lossy(&output.stdout).trim().to_string();
@@ -308,10 +307,8 @@ pub async fn install_gh_cli(app: AppHandle, version: Option<String>) -> Result<(
     // Verify the binary works
     // Use shell wrapper to bypass macOS security restrictions
     let shell_cmd = format!("{:?} --version", binary_path);
-    log::trace!("Running via shell: /bin/sh -c {:?}", shell_cmd);
-    let version_output = Command::new("/bin/sh")
-        .arg("-c")
-        .arg(&shell_cmd)
+    log::trace!("Running via shell: {:?}", shell_cmd);
+    let version_output = crate::platform::shell_command(&shell_cmd)
         .output()
         .map_err(|e| format!("Failed to verify GitHub CLI: {e}"))?;
 
@@ -499,11 +496,9 @@ pub async fn check_gh_cli_auth(app: AppHandle) -> Result<GhAuthStatus, String> {
     // Run gh auth status to check authentication
     let shell_cmd = format!("{:?} auth status", binary_path);
 
-    log::trace!("Running auth check: /bin/sh -c {:?}", shell_cmd);
+    log::trace!("Running auth check: {:?}", shell_cmd);
 
-    let output = Command::new("/bin/sh")
-        .arg("-c")
-        .arg(&shell_cmd)
+    let output = crate::platform::shell_command(&shell_cmd)
         .output()
         .map_err(|e| format!("Failed to execute GitHub CLI: {e}"))?;
 

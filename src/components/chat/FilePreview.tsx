@@ -3,6 +3,7 @@ import { FileIcon, X } from 'lucide-react'
 import type { PendingFile } from '@/types/chat'
 import { cn } from '@/lib/utils'
 import { getExtensionColor } from '@/lib/file-colors'
+import { getFilename } from '@/lib/path-utils'
 
 interface FilePreviewProps {
   /** Array of pending files to display */
@@ -28,9 +29,6 @@ export function FilePreview({ files, onRemove, disabled }: FilePreviewProps) {
   )
 
   if (files.length === 0) return null
-
-  // Get filename from path
-  const getFilename = (path: string) => path.split('/').pop() ?? path
 
   return (
     <div className="flex flex-wrap gap-2 px-4 py-2 md:px-6">

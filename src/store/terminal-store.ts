@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { getFilename } from '@/lib/path-utils'
 
 /** A single terminal instance */
 export interface TerminalInstance {
@@ -52,8 +53,8 @@ function getDefaultLabel(command: string | null): string {
   if (!command) return 'Shell'
   // Extract first word or command name
   const firstWord = command.split(' ')[0] ?? command
-  // Remove path if present
-  const name = firstWord.split('/').pop() ?? firstWord
+  // Remove path if present (cross-platform)
+  const name = getFilename(firstWord)
   return name.length > 20 ? name.slice(0, 17) + '...' : name
 }
 

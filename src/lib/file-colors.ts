@@ -1,3 +1,5 @@
+import { getFilename } from '@/lib/path-utils'
+
 /** File extension to icon color mapping */
 export const EXTENSION_COLORS: Record<string, string> = {
   ts: 'text-blue-500',
@@ -22,7 +24,7 @@ export function getExtensionColor(ext: string): string {
 
 /** Extract extension from filename or path */
 export function getExtension(path: string): string {
-  const filename = path.split('/').pop() ?? path
+  const filename = getFilename(path)
   const parts = filename.split('.')
   return parts.length > 1 ? parts.pop()?.toLowerCase() ?? '' : ''
 }

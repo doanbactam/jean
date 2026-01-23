@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { Textarea } from '@/components/ui/textarea'
 import { Kbd } from '@/components/ui/kbd'
 import { useChatStore } from '@/store/chat-store'
+import { getFilename } from '@/lib/path-utils'
 import type {
   PendingFile,
   PendingSkill,
@@ -210,8 +211,7 @@ export const ChatInput = memo(function ChatInput({
 
         // Remove files that are no longer mentioned
         for (const file of files) {
-          const filename =
-            file.relativePath.split('/').pop() ?? file.relativePath
+          const filename = getFilename(file.relativePath)
           if (!mentionedNames.has(filename)) {
             removePendingFile(activeSessionId, file.id)
           }
@@ -559,7 +559,7 @@ export const ChatInput = memo(function ChatInput({
         const beforeAt = currentValue.slice(0, triggerIndex)
         const afterQuery = currentValue.slice(cursorPos)
         // Get just the filename from the path
-        const filename = file.relativePath.split('/').pop() ?? file.relativePath
+        const filename = getFilename(file.relativePath)
         const newValue = `${beforeAt}@${filename} ${afterQuery}`
 
         // PERFORMANCE: Update DOM directly, no React render

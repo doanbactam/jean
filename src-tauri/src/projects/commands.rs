@@ -1842,10 +1842,64 @@ pub async fn open_worktree_in_terminal(
             .map_err(|e| format!("Failed to open {terminal_app}: {e}"))?;
     }
 
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(target_os = "linux")]
     {
-        log::warn!("open_worktree_in_terminal is only supported on macOS");
-        return Err("Opening in terminal is only supported on macOS".to_string());
+        // Try common Linux terminal emulators in order of preference
+        let terminals = [
+            (
+                "gnome-terminal",
+                vec!["--working-directory", &worktree_path],
+            ),
+            ("konsole", vec!["--workdir", &worktree_path]),
+            ("alacritty", vec!["--working-directory", &worktree_path]),
+            ("kitty", vec!["--directory", &worktree_path]),
+            (
+                "xterm",
+                vec![
+                    "-e",
+                    "bash",
+                    "-c",
+                    &format!("cd '{}'; exec bash", worktree_path),
+                ],
+            ),
+        ];
+
+        let mut opened = false;
+        for (term, args) in terminals {
+            if crate::platform::executable_exists(term) {
+                match std::process::Command::new(term).args(&args).spawn() {
+                    Ok(_) => {
+                        log::trace!("Opened terminal with {term}");
+                        opened = true;
+                        break;
+                    }
+                    Err(e) => {
+                        log::trace!("Failed to open {term}: {e}");
+                    }
+                }
+            }
+        }
+
+        if !opened {
+            return Err("No supported terminal emulator found. Install gnome-terminal, konsole, alacritty, kitty, or xterm.".to_string());
+        }
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        // Use PowerShell (default choice per user preference)
+        let result = std::process::Command::new("powershell")
+            .args([
+                "-NoExit",
+                "-Command",
+                &format!("Set-Location '{}'", worktree_path),
+            ])
+            .spawn();
+
+        match result {
+            Ok(_) => log::trace!("Opened PowerShell in {worktree_path}"),
+            Err(e) => return Err(format!("Failed to open PowerShell: {e}")),
+        }
     }
 
     Ok(())
@@ -1910,10 +1964,32 @@ pub async fn open_worktree_in_editor(
         }
     }
 
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(any(target_os = "linux", target_os = "windows"))]
     {
-        log::warn!("open_worktree_in_editor is only supported on macOS");
-        return Err("Opening in editor is only supported on macOS".to_string());
+        // VS Code and Cursor CLI work the same on all platforms
+        let result = match editor_app.as_str() {
+            "cursor" => std::process::Command::new("cursor")
+                .arg(&worktree_path)
+                .spawn(),
+            "xcode" => {
+                return Err("Xcode is only available on macOS".to_string());
+            }
+            _ => {
+                // Default to VS Code
+                std::process::Command::new("code")
+                    .arg(&worktree_path)
+                    .spawn()
+            }
+        };
+
+        match result {
+            Ok(_) => {
+                log::trace!("Successfully opened {editor_app}");
+            }
+            Err(e) => {
+                return Err(format!("Failed to open {editor_app}: {e}"));
+            }
+        }
     }
 
     Ok(())
@@ -1943,10 +2019,20 @@ pub async fn open_project_on_github(app: AppHandle, project_id: String) -> Resul
             .map_err(|e| format!("Failed to open browser: {e}"))?;
     }
 
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(target_os = "linux")]
     {
-        log::warn!("open_project_on_github browser opening is only implemented for macOS");
-        return Err("Opening browser is only supported on macOS".to_string());
+        std::process::Command::new("xdg-open")
+            .arg(&github_url)
+            .spawn()
+            .map_err(|e| format!("Failed to open browser: {e}"))?;
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        std::process::Command::new("cmd")
+            .args(["/c", "start", "", &github_url])
+            .spawn()
+            .map_err(|e| format!("Failed to open browser: {e}"))?;
     }
 
     Ok(())
@@ -3053,7 +3139,7 @@ fn parse_pr_output(output: &str) -> Result<(u32, String), String> {
     // Extract PR number from URL
     let pr_number = url
         .split('/')
-        .last()
+        .next_back()
         .and_then(|s| s.parse::<u32>().ok())
         .ok_or_else(|| format!("Failed to parse PR number from: {url}"))?;
 
@@ -4703,7 +4789,7 @@ pub async fn list_claude_commands() -> Result<Vec<ClaudeCommand>, String> {
         let path = entry.path();
 
         // Only process .md files
-        if path.extension().map_or(true, |ext| ext != "md") {
+        if path.extension().is_none_or(|ext| ext != "md") {
             continue;
         }
 
@@ -4812,7 +4898,10 @@ pub async fn set_project_avatar(app: AppHandle, project_id: String) -> Result<Pr
 
     save_projects_data(&app, &data)?;
 
-    log::trace!("Successfully set avatar for project: {}", updated_project.name);
+    log::trace!(
+        "Successfully set avatar for project: {}",
+        updated_project.name
+    );
     Ok(updated_project)
 }
 
@@ -4846,7 +4935,10 @@ pub async fn remove_project_avatar(app: AppHandle, project_id: String) -> Result
 
     save_projects_data(&app, &data)?;
 
-    log::trace!("Successfully removed avatar for project: {}", updated_project.name);
+    log::trace!(
+        "Successfully removed avatar for project: {}",
+        updated_project.name
+    );
     Ok(updated_project)
 }
 

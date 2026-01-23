@@ -319,7 +319,7 @@ impl ProjectsData {
         self.get_children(parent_id).iter().any(|p| {
             p.is_folder
                 && p.name.eq_ignore_ascii_case(name)
-                && exclude_id.map_or(true, |id| p.id != id)
+                && exclude_id.is_none_or(|id| p.id != id)
         })
     }
 }

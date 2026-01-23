@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button'
 import { Markdown } from '@/components/ui/markdown'
 import { useSyntaxHighlighting } from '@/hooks/useSyntaxHighlighting'
 import { getLanguageFromPath } from '@/lib/language-detection'
+import { getFilename } from '@/lib/path-utils'
 import { useTheme } from '@/hooks/use-theme'
 import { usePreferences } from '@/services/preferences'
 import type { SyntaxTheme } from '@/types/preferences'
@@ -148,7 +149,8 @@ export function FileContentModal({ filePath, onClose }: FileContentModalProps) {
     }
   }, [filePath, loadFileContent])
 
-  const filename = filePath?.split('/').pop() ?? filePath
+  const filename = filePath ? getFilename(filePath) : filePath
+
   const isImage = isImageFile(filename)
   const isMarkdown = isMarkdownFile(filename)
   const language = filePath ? getLanguageFromPath(filePath) : 'text'

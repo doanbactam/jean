@@ -11,6 +11,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { useProjectsStore } from '@/store/projects-store'
 import { useInitGitInFolder, useAddProject } from '@/services/projects'
+import { getFilename } from '@/lib/path-utils'
 
 export function GitInitModal() {
   const {
@@ -26,9 +27,7 @@ export function GitInitModal() {
 
   const [error, setError] = useState<string | null>(null)
 
-  const folderName = gitInitModalPath
-    ? gitInitModalPath.split('/').pop() || gitInitModalPath
-    : ''
+  const folderName = gitInitModalPath ? getFilename(gitInitModalPath) : ''
 
   const handleOpenChange = useCallback(
     (open: boolean) => {

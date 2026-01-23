@@ -52,6 +52,7 @@ import type {
   PendingFile,
 } from '@/types/chat'
 import { isAskUserQuestion, isExitPlanMode, isTodoWrite } from '@/types/chat'
+import { getFilename } from '@/lib/path-utils'
 import { PermissionApproval } from './PermissionApproval'
 import { SetupScriptOutput } from './SetupScriptOutput'
 import { SessionTabBar } from './SessionTabBar'
@@ -1643,7 +1644,7 @@ Begin your investigation now.`
       const file = files.find(f => f.id === fileId)
       if (file) {
         // Remove @filename from the input text
-        const filename = file.relativePath.split('/').pop() ?? file.relativePath
+        const filename = getFilename(file.relativePath)
         const currentInput = inputDrafts[activeSessionId] ?? ''
         // Match @filename followed by space, newline, or end of string
         const pattern = new RegExp(

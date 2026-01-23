@@ -1,5 +1,6 @@
 import { memo, useCallback } from 'react'
 import { cn } from '@/lib/utils'
+import { normalizePath } from '@/lib/path-utils'
 import { Markdown } from '@/components/ui/markdown'
 import {
   Tooltip,
@@ -302,7 +303,7 @@ export const MessageItem = memo(function MessageItem({
         <div className="flex flex-wrap gap-2 mb-2">
           {skillPaths.map((path, idx) => {
             // Extract skill name from path (e.g., /Users/.../skills/react/SKILL.md -> react)
-            const parts = path.split('/')
+            const parts = normalizePath(path).split('/')
             const skillsIdx = parts.findIndex(p => p === 'skills')
             const name = skillsIdx >= 0 && parts[skillsIdx + 1] ? parts[skillsIdx + 1] : path
             return (

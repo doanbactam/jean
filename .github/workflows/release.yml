@@ -90,5 +90,5 @@ jobs:
             **Full Changelog**: https://github.com/${{ github.repository }}/commits/${{ github.ref_name || inputs.version }}
           releaseDraft: true
           prerelease: false
-          uploadUpdaterJson: true
+          includeUpdaterJson: true
           args: ${{ matrix.args }} -vv

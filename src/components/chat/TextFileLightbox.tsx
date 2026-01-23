@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Markdown } from '@/components/ui/markdown'
 import type { ReadTextResponse } from '@/types/chat'
+import { getFilename } from '@/lib/path-utils'
 
 /** Check if file is markdown based on extension */
 function isMarkdownFile(filename: string): boolean {
@@ -16,11 +17,6 @@ function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-}
-
-/** Extract filename from full path */
-function getFilename(path: string): string {
-  return path.split('/').pop() ?? path
 }
 
 interface TextFileLightboxProps {

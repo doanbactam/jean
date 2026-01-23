@@ -838,7 +838,7 @@ pub fn delete_run_logs(app: &tauri::AppHandle, session_id: &str) -> Result<usize
             .flatten()
         {
             let path = entry.path();
-            if path.extension().map_or(false, |ext| ext == "jsonl") {
+            if path.extension().is_some_and(|ext| ext == "jsonl") {
                 fs::remove_file(&path).map_err(|e| format!("Failed to delete run log: {e}"))?;
                 deleted += 1;
             }

@@ -6,15 +6,11 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Markdown } from '@/components/ui/markdown'
 import { cn } from '@/lib/utils'
 import { getExtension, getExtensionColor } from '@/lib/file-colors'
+import { getFilename } from '@/lib/path-utils'
 
 /** Check if file is markdown based on extension */
 function isMarkdownFile(filename: string): boolean {
   return /\.(md|markdown)$/i.test(filename)
-}
-
-/** Extract filename from full path */
-function getFilename(path: string): string {
-  return path.split('/').pop() ?? path
 }
 
 interface FileMentionBadgeProps {

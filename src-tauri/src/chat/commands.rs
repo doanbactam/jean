@@ -204,6 +204,7 @@ pub async fn rename_session(
 /// Update session-specific UI state (answered questions, fixed findings, etc.)
 /// All fields are optional - only provided fields are updated
 #[tauri::command]
+#[allow(clippy::too_many_arguments)]
 pub async fn update_session_state(
     app: AppHandle,
     worktree_id: String,
@@ -423,7 +424,7 @@ pub async fn archive_session(
                     if sessions
                         .sessions
                         .get(i)
-                        .map_or(false, |s| s.archived_at.is_none())
+                        .is_some_and(|s| s.archived_at.is_none())
                     {
                         candidate = sessions.sessions.get(i).map(|s| s.id.clone());
                         break;
@@ -435,7 +436,7 @@ pub async fn archive_session(
                         if sessions
                             .sessions
                             .get(i)
-                            .map_or(false, |s| s.archived_at.is_none())
+                            .is_some_and(|s| s.archived_at.is_none())
                         {
                             candidate = sessions.sessions.get(i).map(|s| s.id.clone());
                             break;

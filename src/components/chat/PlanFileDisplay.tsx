@@ -4,6 +4,7 @@ import { ChevronRight, FileText, AlertCircle } from 'lucide-react'
 import { readPlanFile } from '@/services/chat'
 import { Markdown } from '@/components/ui/markdown'
 import { cn } from '@/lib/utils'
+import { getFilename } from '@/lib/path-utils'
 import {
   Collapsible,
   CollapsibleContent,
@@ -43,7 +44,7 @@ export function PlanDisplay({
   const [isOpen, setIsOpen] = useState(!defaultCollapsed)
 
   // Extract filename from path for display (only for file-based plans)
-  const filename = filePath ? filePath.split('/').pop() ?? filePath : null
+  const filename = filePath ? getFilename(filePath) : null
 
   // Only fetch if we have a filePath and no inline content
   const { data: fetchedContent, isLoading } = useQuery({

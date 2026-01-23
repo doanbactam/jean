@@ -47,9 +47,12 @@ pub fn get_repo_identifier(repo_path: &str) -> Result<RepoIdentifier, String> {
 
 /// Detect user's default shell and determine if it supports login mode.
 ///
-/// On macOS, GUI apps don't inherit the user's shell PATH. Using a login shell
+/// On macOS/Linux, GUI apps don't inherit the user's shell PATH. Using a login shell
 /// (`-l` flag) sources the user's shell profile (.zshrc, .bashrc, etc.) which
 /// includes PATH modifications for tools like bun, nvm, homebrew, etc.
+///
+/// On Windows, PowerShell doesn't have a login mode concept.
+#[cfg(unix)]
 fn get_user_shell() -> (String, bool) {
     let shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/sh".to_string());
 
@@ -61,6 +64,12 @@ fn get_user_shell() -> (String, bool) {
         || shell.ends_with("tcsh");
 
     (shell, supports_login)
+}
+
+#[cfg(windows)]
+fn get_user_shell() -> (String, bool) {
+    // Windows PowerShell doesn't have a login mode concept
+    ("powershell.exe".to_string(), false)
 }
 
 /// Check if a path is a valid git repository

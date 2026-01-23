@@ -10,6 +10,7 @@ mod background_tasks;
 mod chat;
 mod claude_cli;
 mod gh_cli;
+mod platform;
 mod projects;
 mod terminal;
 

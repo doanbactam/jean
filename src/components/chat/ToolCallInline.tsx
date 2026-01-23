@@ -18,6 +18,7 @@ import type { ToolCall } from '@/types/chat'
 import type { StackableItem } from './tool-call-utils'
 import { Markdown } from '@/components/ui/markdown'
 import { cn } from '@/lib/utils'
+import { getFilename } from '@/lib/path-utils'
 import {
   Collapsible,
   CollapsibleContent,
@@ -460,7 +461,7 @@ function getToolDisplay(toolCall: ToolCall): ToolDisplay {
   switch (toolCall.name) {
     case 'Read': {
       const filePath = input.file_path as string | undefined
-      const filename = filePath?.split('/').pop() ?? filePath
+      const filename = filePath ? getFilename(filePath) : filePath
       const limit = input.limit as number | undefined
       const offset = input.offset as number | undefined
       const lineInfo = limit ? `${limit} lines` : ''
@@ -477,7 +478,7 @@ function getToolDisplay(toolCall: ToolCall): ToolDisplay {
 
     case 'Edit': {
       const filePath = input.file_path as string | undefined
-      const filename = filePath?.split('/').pop() ?? filePath
+      const filename = filePath ? getFilename(filePath) : filePath
       const oldString = input.old_string as string | undefined
       const newString = input.new_string as string | undefined
       return {
@@ -493,7 +494,7 @@ function getToolDisplay(toolCall: ToolCall): ToolDisplay {
 
     case 'Write': {
       const filePath = input.file_path as string | undefined
-      const filename = filePath?.split('/').pop() ?? filePath
+      const filename = filePath ? getFilename(filePath) : filePath
       const content = input.content as string | undefined
       return {
         icon: <PenLine className="h-4 w-4 shrink-0" />,

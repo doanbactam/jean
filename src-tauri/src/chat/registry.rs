@@ -69,58 +69,31 @@ pub fn cancel_process(
 
         log::trace!("Cancelling Claude process group {pid} for session: {session_id}");
 
-        // Kill the entire process group to ensure child processes are also terminated
-        // The negative PID tells kill() to signal the process group, not just the process
-        #[cfg(unix)]
-        {
-            let pgid = -(pid as i32);
-            log::trace!("Sending SIGKILL to process group: pgid={pgid}, original_pid={pid}");
+        // Kill the entire process tree to ensure child processes are also terminated
+        // Uses platform-specific implementation from the platform module
+        use crate::platform::{is_process_alive, kill_process, kill_process_tree};
 
-            // First, check if the process exists
-            let check_result = unsafe { libc::kill(pid as i32, 0) };
-            if check_result != 0 {
-                let err = std::io::Error::last_os_error();
-                log::warn!("Process {pid} check failed (may have exited): {err}");
-            } else {
-                log::trace!("Process {pid} exists, proceeding with kill");
-            }
+        log::trace!("Killing process tree for pid={pid}");
 
-            // Check if process group exists
-            let pgid_check = unsafe { libc::kill(pgid, 0) };
-            if pgid_check != 0 {
-                let err = std::io::Error::last_os_error();
-                log::warn!("Process group {pgid} check failed: {err}");
-            } else {
-                log::trace!("Process group {pgid} exists");
-            }
-
-            // Now send SIGKILL to the process group
-            let result = unsafe { libc::kill(pgid, libc::SIGKILL) };
-            if result != 0 {
-                let err = std::io::Error::last_os_error();
-                log::error!("Failed to kill process group pgid={pgid} (pid={pid}): {err}");
-                // Process group might have already exited, which is fine
-            } else {
-                log::trace!("Successfully sent SIGKILL to process group pgid={pgid}");
-            }
-
-            // Also try killing the process directly as fallback
-            let direct_result = unsafe { libc::kill(pid as i32, libc::SIGKILL) };
-            if direct_result != 0 {
-                let err = std::io::Error::last_os_error();
-                log::trace!("Direct kill of pid={pid} failed (may be redundant): {err}");
-            } else {
-                log::trace!("Direct kill of pid={pid} succeeded");
-            }
+        // First, check if the process exists
+        if !is_process_alive(pid) {
+            log::warn!("Process {pid} check failed (may have exited)");
+        } else {
+            log::trace!("Process {pid} exists, proceeding with kill");
         }
 
-        #[cfg(windows)]
-        {
-            // On Windows, taskkill /T kills the process tree (similar to process group)
-            use std::process::Command;
-            let _ = Command::new("taskkill")
-                .args(["/F", "/T", "/PID", &pid.to_string()])
-                .output();
+        // Kill the process tree (process group on Unix, taskkill /T on Windows)
+        if let Err(e) = kill_process_tree(pid) {
+            log::error!("Failed to kill process tree for pid={pid}: {e}");
+        } else {
+            log::trace!("Successfully sent kill to process tree pid={pid}");
+        }
+
+        // Also try killing the process directly as fallback
+        if let Err(e) = kill_process(pid) {
+            log::trace!("Direct kill of pid={pid} failed (may be redundant): {e}");
+        } else {
+            log::trace!("Direct kill of pid={pid} succeeded");
         }
 
         // Update manifest SYNCHRONOUSLY before emitting event

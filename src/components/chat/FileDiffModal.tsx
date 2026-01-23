@@ -8,6 +8,7 @@ import { getGitDiff } from '@/services/git-status'
 import { useTheme } from '@/hooks/use-theme'
 import { usePreferences } from '@/services/preferences'
 import type { GitDiff } from '@/types/git-diff'
+import { getFilename } from '@/lib/path-utils'
 
 interface FileDiffModalProps {
   /** Absolute path to the file to show diff for, or null to close */
@@ -166,7 +167,7 @@ export function FileDiffModal({
   )
 
   // Extract display filename
-  const displayFilename = filePath?.split('/').pop() ?? 'File'
+  const displayFilename = filePath ? getFilename(filePath) : 'File'
 
   return (
     <Dialog open={!!filePath} onOpenChange={open => !open && onClose()}>

@@ -1,6 +1,7 @@
 import { memo } from 'react'
 import type { ToolCall } from '@/types/chat'
 import { Badge } from '@/components/ui/badge'
+import { getFilename } from '@/lib/path-utils'
 
 /** Type guard to check if a tool call is Edit */
 function isEditTool(
@@ -12,11 +13,6 @@ function isEditTool(
     toolCall.input !== null &&
     'file_path' in toolCall.input
   )
-}
-
-/** Extract filename from path */
-function getFilename(path: string): string {
-  return path.split('/').pop() ?? path
 }
 
 interface EditedFilesDisplayProps {

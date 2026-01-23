@@ -9,9 +9,9 @@ use super::types::{
     TerminalOutputEvent, TerminalSession, TerminalStartedEvent, TerminalStoppedEvent,
 };
 
-/// Detect user's default shell
+/// Detect user's default shell (cross-platform)
 fn get_user_shell() -> String {
-    std::env::var("SHELL").unwrap_or_else(|_| "/bin/sh".to_string())
+    crate::platform::get_default_shell()
 }
 
 /// Spawn a terminal, optionally running a command
@@ -197,14 +197,10 @@ pub fn resize_terminal(terminal_id: &str, cols: u16, rows: u16) -> Result<(), St
 /// Kill a terminal
 pub fn kill_terminal(app: &AppHandle, terminal_id: &str) -> Result<bool, String> {
     if let Some(mut session) = unregister_terminal(terminal_id) {
-        // Kill the child process
-        #[cfg(unix)]
-        {
-            // Try to kill gracefully first
-            if let Some(pid) = session.child.process_id() {
-                unsafe {
-                    libc::kill(pid as i32, libc::SIGTERM);
-                }
+        // Kill the child process - try graceful termination first
+        if let Some(pid) = session.child.process_id() {
+            if let Err(e) = crate::platform::terminate_process(pid) {
+                log::trace!("Graceful termination of pid={pid} failed: {e}");
             }
         }
 
@@ -240,13 +236,10 @@ pub fn kill_all_terminals() -> usize {
     for (terminal_id, mut session) in sessions.drain() {
         eprintln!("[TERMINAL CLEANUP] Killing terminal: {terminal_id}");
 
-        #[cfg(unix)]
-        {
-            if let Some(pid) = session.child.process_id() {
-                eprintln!("[TERMINAL CLEANUP] Sending SIGTERM to PID {pid}");
-                unsafe {
-                    libc::kill(pid as i32, libc::SIGTERM);
-                }
+        if let Some(pid) = session.child.process_id() {
+            eprintln!("[TERMINAL CLEANUP] Sending terminate signal to PID {pid}");
+            if let Err(e) = crate::platform::terminate_process(pid) {
+                eprintln!("[TERMINAL CLEANUP] Graceful termination failed: {e}");
             }
         }
 

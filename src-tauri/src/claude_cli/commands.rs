@@ -87,7 +87,7 @@ pub async fn check_claude_cli_installed(app: AppHandle) -> Result<ClaudeCliStatu
     // Try to get the version by running claude --version
     // Use shell wrapper to bypass macOS security restrictions
     let shell_cmd = format!("{:?} --version", binary_path);
-    let version = match Command::new("/bin/sh").arg("-c").arg(&shell_cmd).output() {
+    let version = match crate::platform::shell_command(&shell_cmd).output() {
         Ok(output) => {
             if output.status.success() {
                 let version_str = String::from_utf8_lossy(&output.stdout).trim().to_string();
@@ -456,11 +456,9 @@ pub async fn check_claude_cli_auth(app: AppHandle) -> Result<ClaudeAuthStatus, S
         binary_path
     );
 
-    log::trace!("Running auth check: /bin/sh -c {:?}", shell_cmd);
+    log::trace!("Running auth check: {:?}", shell_cmd);
 
-    let output = Command::new("/bin/sh")
-        .arg("-c")
-        .arg(&shell_cmd)
+    let output = crate::platform::shell_command(&shell_cmd)
         .output()
         .map_err(|e| format!("Failed to execute Claude CLI: {e}"))?;
 

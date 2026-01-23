@@ -43,9 +43,13 @@ zip = "2.2"      # For extracting zip archives (gh CLI on macOS/Windows)
 flate2 = "1.0"   # For gzip decompression (gh CLI on Linux)
 tar = "0.4"      # For tar archive extraction (gh CLI on Linux)
 portable-pty = "0.8"  # For terminal/PTY support
+which = "7"           # For cross-platform executable detection
 
 [target.'cfg(unix)'.dependencies]
 libc = "0.2"
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.59", features = ["Win32_System_Threading", "Win32_Foundation"] }
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-updater = "2"
