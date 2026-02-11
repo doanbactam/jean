@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useEffect, useRef } from 'react'
 import { invoke } from '@/lib/transport'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
@@ -107,6 +107,8 @@ export const GeneralPane: React.FC = () => {
   const savePreferences = useSavePreferences()
   const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [aiLanguageInput, setAiLanguageInput] = useState('')
+  const aiLanguageSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // CLI status hooks
   const { data: cliStatus, isLoading: isCliLoading } = useClaudeCliStatus()
@@ -129,6 +131,18 @@ export const GeneralPane: React.FC = () => {
   // Use global ui-store for CLI modals
   const openCliUpdateModal = useUIStore(state => state.openCliUpdateModal)
   const openCliLoginModal = useUIStore(state => state.openCliLoginModal)
+
+  useEffect(() => {
+    setAiLanguageInput(preferences?.ai_language ?? '')
+  }, [preferences?.ai_language])
+
+  useEffect(() => {
+    return () => {
+      if (aiLanguageSaveTimeoutRef.current) {
+        clearTimeout(aiLanguageSaveTimeoutRef.current)
+      }
+    }
+  }, [])
 
   const handleDeleteAllArchives = useCallback(async () => {
     setIsDeleting(true)
@@ -240,6 +254,39 @@ export const GeneralPane: React.FC = () => {
       playNotificationSound(value)
     }
   }
+
+  const handleAiLanguageChange = useCallback(
+    (value: string) => {
+      setAiLanguageInput(value)
+
+      if (aiLanguageSaveTimeoutRef.current) {
+        clearTimeout(aiLanguageSaveTimeoutRef.current)
+      }
+
+      aiLanguageSaveTimeoutRef.current = setTimeout(() => {
+        if (!preferences) return
+        savePreferences.mutate({
+          ...preferences,
+          ai_language: value,
+        })
+      }, 500)
+    },
+    [preferences, savePreferences]
+  )
+
+  const handleAiLanguageBlur = useCallback(() => {
+    if (aiLanguageSaveTimeoutRef.current) {
+      clearTimeout(aiLanguageSaveTimeoutRef.current)
+      aiLanguageSaveTimeoutRef.current = null
+    }
+
+    if (preferences && aiLanguageInput !== (preferences.ai_language ?? '')) {
+      savePreferences.mutate({
+        ...preferences,
+        ai_language: aiLanguageInput,
+      })
+    }
+  }, [aiLanguageInput, preferences, savePreferences])
 
   const handleReviewSoundChange = (value: NotificationSound) => {
     if (preferences) {
@@ -552,15 +599,9 @@ export const GeneralPane: React.FC = () => {
             <Input
               className="w-40"
               placeholder="Default"
-              value={preferences?.ai_language ?? ''}
-              onChange={e => {
-                if (preferences) {
-                  savePreferences.mutate({
-                    ...preferences,
-                    ai_language: e.target.value,
-                  })
-                }
-              }}
+              value={aiLanguageInput}
+              onChange={e => handleAiLanguageChange(e.target.value)}
+              onBlur={handleAiLanguageBlur}
             />
           </InlineField>
 
