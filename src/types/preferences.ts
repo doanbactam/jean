@@ -488,6 +488,19 @@ export const PREDEFINED_CLI_PROFILES: CustomCliProfile[] = [
       2
     ),
   },
+  {
+    name: 'OpenAI Codex',
+    settings_json: JSON.stringify(
+      {
+        env: {
+          OPENAI_API_KEY: '<your-openai-api-key>',
+          OPENAI_BASE_URL: 'https://api.openai.com/v1',
+        },
+      },
+      null,
+      2
+    ),
+  },
 ]
 
 export type FileEditMode = 'inline' | 'external'

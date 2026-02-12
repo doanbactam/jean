@@ -11,6 +11,7 @@ use tauri::menu::{MenuBuilder, MenuItemBuilder, PredefinedMenuItem, SubmenuBuild
 mod background_tasks;
 mod chat;
 mod claude_cli;
+mod codex_cli;
 mod gh_cli;
 pub mod http_server;
 mod platform;
@@ -1899,6 +1900,11 @@ pub fn run() {
             claude_cli::check_claude_cli_auth,
             claude_cli::get_available_cli_versions,
             claude_cli::install_claude_cli,
+            // Codex CLI management commands
+            codex_cli::check_codex_cli_installed,
+            codex_cli::check_codex_cli_auth,
+            codex_cli::get_available_codex_versions,
+            codex_cli::install_codex_cli,
             // GitHub CLI management commands
             gh_cli::check_gh_cli_installed,
             gh_cli::check_gh_cli_auth,

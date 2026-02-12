@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { useClaudeCliSetup } from '@/services/claude-cli'
+import { useCodexCliSetup } from '@/services/codex-cli'
 import { useGhCliSetup } from '@/services/gh-cli'
 import { logger } from '@/lib/logger'
 import {
@@ -99,11 +100,32 @@ function GhCliReinstallModalContent({ open, onOpenChange }: ModalProps) {
 }
 
 /**
+ * Codex CLI specific modal - calls ONLY useCodexCliSetup
+ * This ensures only one event listener is active
+ */
+export function CodexCliReinstallModal({ open, onOpenChange }: ModalProps) {
+  if (!open) return null
+  return <CodexCliReinstallModalContent open={open} onOpenChange={onOpenChange} />
+}
+
+function CodexCliReinstallModalContent({ open, onOpenChange }: ModalProps) {
+  const setup = useCodexCliSetup()
+  return (
+    <CliReinstallModalUI
+      setup={setup}
+      cliType="codex"
+      open={open}
+      onOpenChange={onOpenChange}
+    />
+  )
+}
+
+/**
  * Shared UI component - receives setup as prop, no hooks here
  */
 interface CliReinstallModalUIProps {
   setup: CliSetupInterface
-  cliType: 'claude' | 'gh'
+  cliType: 'claude' | 'gh' | 'codex'
   open: boolean
   onOpenChange: (open: boolean) => void
 }
@@ -114,7 +136,7 @@ function CliReinstallModalUI({
   open,
   onOpenChange,
 }: CliReinstallModalUIProps) {
-  const cliName = cliType === 'claude' ? 'Claude CLI' : 'GitHub CLI'
+  const cliName = cliType === 'claude' ? 'Claude CLI' : cliType === 'gh' ? 'GitHub CLI' : 'Codex CLI'
 
   // Store setup in ref for stable callback reference
   const setupRef = useRef(setup)

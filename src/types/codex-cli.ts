@@ -1,0 +1,51 @@
+/**
+ * Types for Codex CLI management
+ */
+
+/**
+ * Status of the Codex CLI installation
+ */
+export interface CodexCliStatus {
+  /** Whether Codex CLI is installed */
+  installed: boolean
+  /** Installed version (if any) */
+  version: string | null
+  /** Path to the CLI binary (if installed) */
+  path: string | null
+}
+
+/**
+ * Result of checking Codex CLI authentication status
+ */
+export interface CodexAuthStatus {
+  /** Whether the CLI is authenticated */
+  authenticated: boolean
+  /** Error message if authentication check failed */
+  error: string | null
+}
+
+/**
+ * Information about a Codex CLI release from GitHub
+ */
+export interface CodexReleaseInfo {
+  /** Version string (e.g., "1.0.0") */
+  version: string
+  /** Git tag name (e.g., "v1.0.0") */
+  tagName: string
+  /** Publication date in ISO format */
+  publishedAt: string
+  /** Whether this is a prerelease */
+  prerelease: boolean
+}
+
+/**
+ * Progress event during Codex CLI installation
+ */
+export interface CodexInstallProgress {
+  /** Current stage of installation */
+  stage: string
+  /** Progress message */
+  message: string
+  /** Percentage complete (0-100) */
+  percent: number
+}

@@ -13,9 +13,11 @@ import {
   useClaudeCliAuth,
   claudeCliQueryKeys,
 } from '@/services/claude-cli'
+import { useCodexCliStatus, useCodexCliAuth, codexCliQueryKeys } from '@/services/codex-cli'
 import { useGhCliStatus, useGhCliAuth, ghCliQueryKeys } from '@/services/gh-cli'
 import { useUIStore } from '@/store/ui-store'
 import type { ClaudeAuthStatus } from '@/types/claude-cli'
+import type { CodexAuthStatus } from '@/types/codex-cli'
 import type { GhAuthStatus } from '@/types/gh-cli'
 import {
   Select,
@@ -116,6 +118,7 @@ export const GeneralPane: React.FC = () => {
 
   // CLI status hooks
   const { data: cliStatus, isLoading: isCliLoading } = useClaudeCliStatus()
+  const { data: codexStatus, isLoading: isCodexLoading } = useCodexCliStatus()
   const { data: ghStatus, isLoading: isGhLoading } = useGhCliStatus()
 
   // Auth status queries - only enabled when CLI is installed
@@ -124,12 +127,16 @@ export const GeneralPane: React.FC = () => {
       enabled: !!cliStatus?.installed,
     }
   )
+  const { data: codexAuth, isLoading: isCodexAuthLoading } = useCodexCliAuth({
+    enabled: !!codexStatus?.installed,
+  })
   const { data: ghAuth, isLoading: isGhAuthLoading } = useGhCliAuth({
     enabled: !!ghStatus?.installed,
   })
 
   // Track which auth check is in progress (for manual refresh)
   const [checkingClaudeAuth, setCheckingClaudeAuth] = useState(false)
+  const [checkingCodexAuth, setCheckingCodexAuth] = useState(false)
   const [checkingGhAuth, setCheckingGhAuth] = useState(false)
 
   // Use global ui-store for CLI modals
@@ -331,6 +338,37 @@ export const GeneralPane: React.FC = () => {
     openCliLoginModal('claude', escapedPath)
   }, [cliStatus?.path, openCliLoginModal, queryClient])
 
+  const handleCodexLogin = useCallback(async () => {
+    if (!codexStatus?.path) return
+
+    // First check if already authenticated
+    setCheckingCodexAuth(true)
+    try {
+      // Invalidate cache and refetch to get fresh status
+      await queryClient.invalidateQueries({
+        queryKey: codexCliQueryKeys.auth(),
+      })
+      const result = await queryClient.fetchQuery<CodexAuthStatus>({
+        queryKey: codexCliQueryKeys.auth(),
+      })
+
+      if (result?.authenticated) {
+        toast.success('Codex CLI is already authenticated')
+        return
+      }
+    } finally {
+      setCheckingCodexAuth(false)
+    }
+
+    // Not authenticated, open login modal
+    // Use & "path" syntax for PowerShell on Windows, single-quote escaping for Unix
+    const isWindows = navigator.userAgent.includes('Windows')
+    const escapedPath = isWindows
+      ? `& "${codexStatus.path}" login`
+      : `'${codexStatus.path.replace(/'/g, "'\\''")}'` + ' login'
+    openCliLoginModal('codex', escapedPath)
+  }, [codexStatus?.path, openCliLoginModal, queryClient])
+
   const handleGhLogin = useCallback(async () => {
     if (!ghStatus?.path) return
 
@@ -367,6 +405,10 @@ export const GeneralPane: React.FC = () => {
   const ghStatusDescription = ghStatus?.installed
     ? ghStatus.path
     : 'GitHub CLI is required for GitHub integration'
+
+  const codexStatusDescription = codexStatus?.installed
+    ? codexStatus.path
+    : 'Codex CLI is required for OpenAI integration'
 
   const handleCopyPath = useCallback((path: string | null | undefined) => {
     if (!path) return
@@ -505,6 +547,75 @@ export const GeneralPane: React.FC = () => {
                 <Button
                   className="w-40"
                   onClick={() => openCliUpdateModal('gh')}
+                >
+                  Install
+                </Button>
+              )}
+            </InlineField>
+          </div>
+        </SettingsSection>
+      )}
+
+      {isNativeApp() && (
+        <SettingsSection
+          title="Codex CLI"
+          actions={
+            codexStatus?.installed ? (
+              checkingCodexAuth || isCodexAuthLoading ? (
+                <span className="text-sm text-muted-foreground flex items-center gap-2">
+                  <Loader2 className="size-3 animate-spin" />
+                  Checking...
+                </span>
+              ) : codexAuth?.authenticated ? (
+                <span className="text-sm text-muted-foreground">Logged in</span>
+              ) : (
+                <Button variant="outline" size="sm" onClick={handleCodexLogin}>
+                  Login
+                </Button>
+              )
+            ) : (
+              <span className="text-sm text-muted-foreground">
+                Not installed
+              </span>
+            )
+          }
+        >
+          <div className="space-y-4">
+            <InlineField
+              label={codexStatus?.installed ? 'Version' : 'Status'}
+              description={
+                codexStatus?.installed ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => handleCopyPath(codexStatus.path)}
+                        className="text-left hover:underline cursor-pointer"
+                      >
+                        {codexStatusDescription}
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>Click to copy path</TooltipContent>
+                  </Tooltip>
+                ) : (
+                  'Optional'
+                )
+              }
+            >
+              {isCodexLoading ? (
+                <Loader2 className="size-4 animate-spin text-muted-foreground" />
+              ) : codexStatus?.installed ? (
+                <Button
+                  variant="outline"
+                  className="w-40 justify-between"
+                  onClick={() => openCliUpdateModal('codex')}
+                >
+                  {codexStatus.version ?? 'Installed'}
+                  <ChevronDown className="size-3" />
+                </Button>
+              ) : (
+                <Button
+                  className="w-40"
+                  onClick={() => openCliUpdateModal('codex')}
                 >
                   Install
                 </Button>

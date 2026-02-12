@@ -11,11 +11,11 @@ export type PreferencePane =
   | 'experimental'
   | 'web-access'
 
-export type OnboardingStartStep = 'claude' | 'gh' | null
+export type OnboardingStartStep = 'claude' | 'gh' | 'codex' | null
 
-export type CliUpdateModalType = 'claude' | 'gh' | null
+export type CliUpdateModalType = 'claude' | 'gh' | 'codex' | null
 
-export type CliLoginModalType = 'claude' | 'gh' | null
+export type CliLoginModalType = 'claude' | 'gh' | 'codex' | null
 
 interface UIState {
   leftSidebarVisible: boolean
@@ -90,9 +90,9 @@ interface UIState {
     projectPath?: string | null,
     branch?: string | null
   ) => void
-  openCliUpdateModal: (type: 'claude' | 'gh') => void
+  openCliUpdateModal: (type: 'claude' | 'gh' | 'codex') => void
   closeCliUpdateModal: () => void
-  openCliLoginModal: (type: 'claude' | 'gh', command: string) => void
+  openCliLoginModal: (type: 'claude' | 'gh' | 'codex', command: string) => void
   closeCliLoginModal: () => void
   markWorktreeForAutoInvestigate: (worktreeId: string) => void
   consumeAutoInvestigate: (worktreeId: string) => boolean
